@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字时钟番茄钟</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .clock-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .digital-clock {
+            font-size: 5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 2rem;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .digit {
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+
+        .colon {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            margin: 2rem 0;
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 0 8px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .quote {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            font-size: 1.2rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.6;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .time-input {
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .time-label {
+            font-size: 1.1rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="digital-clock">
+            <span class="digit minutes-tens">0</span>
+            <span class="digit minutes-ones">0</span>
+            <span class="colon">:</span>
+            <span class="digit seconds-tens">0</span>
+            <span class="digit seconds-ones">0</span>
+        </div>
+
+        <div class="time-input">
+            <input type="number" id="minutes" min="1" max="60" value="25">
+            <span class="time-label">分钟</span>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">开始</button>
+            <button id="resetBtn">重置</button>
+        </div>
+
+        <div class="quote" id="quote">加载励志语录中...</div>
+    </div>
+
+    <script>
+        let timer = null;
+        let timeLeft = 0;
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const minutesInput = document.getElementById('minutes');
+        const quoteElement = document.getElementById('quote');
+
+        function updateDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            
+            updateDigit('minutes-tens', Math.floor(minutes / 10));
+            updateDigit('minutes-ones', minutes % 10);
+            updateDigit('seconds-tens', Math.floor(remainingSeconds / 10));
+            updateDigit('seconds-ones', remainingSeconds % 10);
+        }
+
+        function updateDigit(className, value) {
+            const digit = document.querySelector(`.${className}`);
+            if (digit.textContent !== value.toString()) {
+                digit.style.transform = 'translateY(-20px)';
+                digit.style.opacity = '0';
+                
+                setTimeout(() => {
+                    digit.textContent = value;
+                    digit.style.transform = 'translateY(20px)';
+                    
+                    requestAnimationFrame(() => {
+                        digit.style.transform = 'translateY(0)';
+                        digit.style.opacity = '1';
+                    });
+                }, 150);
+            }
+        }
+
+        function startTimer() {
+            if (timer) return;
+            
+            timeLeft = parseInt(minutesInput.value) * 60;
+            updateDisplay(timeLeft);
+            
+            startBtn.disabled = true;
+            minutesInput.disabled = true;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateDisplay(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timer = null;
+                    startBtn.disabled = false;
+                    minutesInput.disabled = false;
+                    alert('时间到！');
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            startBtn.disabled = false;
+            minutesInput.disabled = false;
+            timeLeft = parseInt(minutesInput.value) * 60;
+            updateDisplay(timeLeft);
+        }
+
+        async function getRandomQuote() {
+            try {
+                const response = await fetch('https://api.apiopen.top/api/sentences');
+                const data = await response.json();
+                if (data.code === 200) {
+                    quoteElement.textContent = data.result.name;
+                }
+            } catch (error) {
+                console.error('获取励志语录失败:', error);
+                quoteElement.textContent = '生命不息，奋斗不止！';
+            }
+        }
+
+        startBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        
+        // 初始化显示
+        updateDisplay(parseInt(minutesInput.value) * 60);
+        
+        // 获取第一条励志语录
+        getRandomQuote();
+        
+        // 每5分钟更新一次励志语录
+        setInterval(getRandomQuote, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
